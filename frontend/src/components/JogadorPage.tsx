@@ -10,6 +10,7 @@ export default function JogadorPage() {
   const [jogadorSelecionado, setJogadorSelecionado] = useState<Jogador | null>(null);
   const [mediaNota, setMediaNota] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  const [filtro, setFiltro] = useState('');
 
   useEffect(() => {
     const fetchJogadores = async () => {
@@ -37,40 +38,120 @@ export default function JogadorPage() {
     }
   };
 
+  const jogadoresFiltrados = jogadores.filter(
+    (j) => j.nome.toLowerCase().includes(filtro.toLowerCase()) ||
+           j.numero_camisa.toString().includes(filtro)
+  );
+
+  const getRatingColor = (nota: number) => {
+    if (nota >= 8) return '#27ae60';
+    if (nota >= 7) return '#f39c12';
+    if (nota >= 6) return '#e67e22';
+    return '#e74c3c';
+  };
+
   return (
     <div className={styles.container}>
-      <h1>Avaliação de Jogador</h1>
-
-      <div className={styles.searchContainer}>
-        <label htmlFor="jogador-select">Selecione um jogador:</label>
-        <select
-          id="jogador-select"
-          onChange={(e) => handleJogadorChange(Number(e.target.value))}
-          className={styles.select}
-        >
-          <option value="">-- Escolher --</option>
-          {jogadores.map((j) => (
-            <option key={j.numero_camisa} value={j.numero_camisa}>
-              #{j.numero_camisa} - {j.nome}
-            </option>
-          ))}
-        </select>
+      <div className={styles.header}>
+        <h1>Avaliacao de Jogador</h1>
+        <p>Confira o desempenho dos atletas rubro-negros</p>
       </div>
 
-      {loading && <p>Carregando...</p>}
+      <div className={styles.searchContainer}>
+        <input
+          type="text"
+          placeholder="Buscar por nome ou numero..."
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          className={styles.searchInput}
+        />
+      </div>
 
-      {jogadorSelecionado && (
-        <div className={styles.playerInfo}>
-          <h2>{jogadorSelecionado.nome}</h2>
-          <p>Posição: {jogadorSelecionado.posicao}</p>
-          <p>Número: {jogadorSelecionado.numero_camisa}</p>
-          <div className={styles.mediaContainer}>
-            <h3>Média de Notas: <span className={styles.media}>{mediaNota.toFixed(1)}</span></h3>
+      <div className={styles.gridContainer}>
+        <div className={styles.playersList}>
+          <h2>Elenco</h2>
+          <div className={styles.jogadoresGrid}>
+            {jogadoresFiltrados.map((jogador) => (
+              <button
+                key={jogador.numero_camisa}
+                className={`${styles.playerCard} ${jogadorSelecionado?.numero_camisa === jogador.numero_camisa ? styles.active : ''}`}
+                onClick={() => handleJogadorChange(jogador.numero_camisa)}
+              >
+                <div className={styles.camisa}>{jogador.numero_camisa}</div>
+                <div className={styles.playerName}>{jogador.nome}</div>
+                <div className={styles.posicao}>{jogador.posicao}</div>
+              </button>
+            ))}
           </div>
         </div>
-      )}
 
-      {/* Aqui irão os cards dos jogos */}
+        <div className={styles.playerDetails}>
+          {loading && (
+            <div className={styles.loadingCard}>
+              <p>Carregando dados...</p>
+            </div>
+          )}
+
+          {jogadorSelecionado && !loading && (
+            <div className={styles.detailsCard}>
+              <div className={styles.playerHeader}>
+                <div className={styles.camisaLarge}>{jogadorSelecionado.numero_camisa}</div>
+                <div className={styles.playerInfo}>
+                  <h2>{jogadorSelecionado.nome}</h2>
+                  <p className={styles.posicaoDetail}>{jogadorSelecionado.posicao}</p>
+                </div>
+              </div>
+
+              <div className={styles.ratingSection}>
+                <div className={styles.ratingCard}>
+                  <p className={styles.ratingLabel}>Media de Avaliacoes</p>
+                  <div
+                    className={styles.ratingValue}
+                    style={{ color: getRatingColor(mediaNota) }}
+                  >
+                    {mediaNota.toFixed(1)}
+                  </div>
+                  <div className={styles.ratingBar}>
+                    <div
+                      className={styles.ratingFill}
+                      style={{
+                        width: `${(mediaNota / 10) * 100}%`,
+                        backgroundColor: getRatingColor(mediaNota),
+                      }}
+                    />
+                  </div>
+                  <p className={styles.ratingText}>
+                    {mediaNota >= 8
+                      ? 'Performance Excelente'
+                      : mediaNota >= 7
+                      ? 'Bom Desempenho'
+                      : mediaNota >= 6
+                      ? 'Desempenho Adequado'
+                      : 'Abaixo da Expectativa'}
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.infoGrid}>
+                <div className={styles.infoBox}>
+                  <p className={styles.infoLabel}>Posicao</p>
+                  <p className={styles.infoValue}>{jogadorSelecionado.posicao}</p>
+                </div>
+                <div className={styles.infoBox}>
+                  <p className={styles.infoLabel}>Numero Camisa</p>
+                  <p className={styles.infoValue}>{jogadorSelecionado.numero_camisa}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!jogadorSelecionado && !loading && (
+            <div className={styles.placeholderCard}>
+              <p>Selecione um jogador para ver as avaliacoes</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

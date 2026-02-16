@@ -1,14 +1,35 @@
 .container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
 }
 
-.filtersContainer {
-  display: flex;
-  gap: 2rem;
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  color: #c41e3a;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0;
+}
+
+.filterSection {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
 }
 
 .filterGroup {
@@ -20,91 +41,220 @@
 .filterGroup label {
   font-weight: 600;
   color: #333;
+  font-size: 0.95rem;
 }
 
 .select {
   padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
   font-size: 1rem;
-  min-width: 250px;
+  transition: all 0.3s ease;
+  background-color: white;
+  cursor: pointer;
 }
 
-.cardsContainer {
+.select:hover {
+  border-color: #c41e3a;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #c41e3a;
+  box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+}
+
+.content {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading,
+.noResults,
+.placeholder {
+  background: white;
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: #999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.loading p,
+.noResults p,
+.placeholder p {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.statsHeader {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.statsHeader h2 {
+  font-size: 1.8rem;
+  color: #c41e3a;
+  margin: 0;
+}
+
+.gameInfo {
+  color: #999;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.jogadoresGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.card {
-  background-color: white;
-  border-radius: 8px;
+.playerCard {
+  background: white;
+  border: 2px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.playerCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #c41e3a, #f39c12);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
 }
 
-.playerImage {
-  width: 100%;
-  height: 280px;
-  object-fit: cover;
+.playerCard:hover {
+  border-color: #c41e3a;
+  transform: translateY(-6px);
+  box-shadow: 0 8px 16px rgba(196, 30, 58, 0.15);
+}
+
+.playerCard:hover::before {
+  transform: scaleX(1);
+}
+
+.cardCamisa {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #c41e3a;
+  text-align: center;
+  margin-bottom: 1rem;
 }
 
 .cardContent {
-  padding: 1.5rem;
+  margin-top: 1rem;
 }
 
-.cardContent h3 {
-  margin: 0;
+.playerNameCard {
+  font-size: 1.1rem;
+  font-weight: 600;
   color: #333;
-  font-size: 1.2rem;
+  margin: 0 0 0.25rem 0;
 }
 
-.position {
-  color: #666;
-  font-size: 0.9rem;
-  margin: 0.5rem 0;
-}
-
-.number {
+.posicaoCard {
+  font-size: 0.85rem;
   color: #999;
-  font-size: 0.9rem;
-  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 1rem 0;
 }
 
 .ratingContainer {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 2px solid #f0f0f0;
   display: flex;
-  justify-content: center;
   align-items: center;
+  gap: 1rem;
 }
 
-.rating {
-  font-size: 2rem;
+.ratingBall {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  color: white;
   font-weight: bold;
-  color: #c41e3a; /* Vermelho do Flamengo */
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ratingBar {
+  flex: 1;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ratingBarFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
 }
 
 @media (max-width: 768px) {
-  .cardsContainer {
+  .container {
+    padding: 1rem;
+  }
+
+  .header h1 {
+    font-size: 1.8rem;
+  }
+
+  .filterSection {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+
+  .statsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .jogadoresGrid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
   }
 
-  .filtersContainer {
-    flex-direction: column;
-    gap: 1rem;
+  .playerCard {
+    padding: 1rem;
   }
 
-  .select {
-    min-width: 100%;
+  .cardCamisa {
+    font-size: 2rem;
+  }
+
+  .ratingBall {
+    width: 50px;
+    height: 50px;
+    font-size: 1.1rem;
   }
 }

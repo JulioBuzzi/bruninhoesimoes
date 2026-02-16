@@ -18,7 +18,6 @@ export default function CampeonatoPage() {
   const [jogadoresComNotas, setJogadoresComNotas] = useState<JogadorCard[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Posições ordenadas corretamente
   const posicaoOrder: { [key: string]: number } = {
     'Goleiro': 1,
     'Lateral Direito': 2,
@@ -80,45 +79,33 @@ export default function CampeonatoPage() {
           jogosParaFiltrar = jogos.filter((j) => j.id_jogo === Number(jogoSelecionado));
         }
 
-        const jogadoresComMedia: JogadorCard[] = [];
+        const jogadoresMap: { [key: number]: JogadorCard } = {};
 
         for (const jogador of jogadores) {
-          let totalNotas = 0;
-          let countNotas = 0;
+          const notas = await notasService.getByJogador(jogador.numero_camisa);
+          const notasDoJogo = notas.filter((n) =>
+            jogosParaFiltrar.some((j) => j.id_jogo === n.id_jogo)
+          );
 
-          for (const jogo of jogosParaFiltrar) {
-            try {
-              const notas = await notasService.getByJogo(jogo.id_jogo);
-              const notasJogador = notas.filter((n) => n.numero_jogador === jogador.numero_camisa);
-              
-              if (notasJogador.length > 0) {
-                const mediaNotas = notasJogador.reduce((sum, n) => sum + n.valor_nota, 0) / notasJogador.length;
-                totalNotas += mediaNotas;
-                countNotas++;
-              }
-            } catch (error) {
-              // Continua se não encontrar notas
-            }
-          }
-
-          if (countNotas > 0) {
-            jogadoresComMedia.push({
+          if (notasDoJogo.length > 0) {
+            const media =
+              notasDoJogo.reduce((sum, n) => sum + n.valor_nota, 0) / notasDoJogo.length;
+            jogadoresMap[jogador.numero_camisa] = {
               ...jogador,
-              media_notas: totalNotas / countNotas,
-            });
+              media_notas: media,
+            };
           }
         }
 
-        // Ordenar por posição
-        jogadoresComMedia.sort((a, b) => {
-          const orderA = posicaoOrder[a.posicao] || 999;
-          const orderB = posicaoOrder[b.posicao] || 999;
-          return orderA - orderB;
-        });
-
-        setJogadoresComNotas(jogadoresComMedia);
+        setJogadoresComNotas(
+          Object.values(jogadoresMap).sort(
+            (a, b) =>
+              (posicaoOrder[a.posicao] || 999) - (posicaoOrder[b.posicao] || 999) ||
+              b.media_notas - a.media_notas
+          )
+        );
       } catch (error) {
-        console.error('Erro ao buscar jogadores com notas:', error);
+        console.error('Erro ao buscar notas dos jogadores:', error);
       } finally {
         setLoading(false);
       }
@@ -127,23 +114,32 @@ export default function CampeonatoPage() {
     fetchJogadoresComNotas();
   }, [campeonatoSelecionado, jogoSelecionado, jogadores, jogos]);
 
+  const getRatingColor = (nota: number) => {
+    if (nota >= 8) return '#27ae60';
+    if (nota >= 7) return '#f39c12';
+    if (nota >= 6) return '#e67e22';
+    return '#e74c3c';
+  };
+
   return (
     <div className={styles.container}>
-      <h1>Avaliação por Campeonato</h1>
+      <div className={styles.header}>
+        <h1>Avaliacoes por Campeonato</h1>
+        <p>Analise o desempenho do elenco em cada competicao</p>
+      </div>
 
-      <div className={styles.filtersContainer}>
+      <div className={styles.filterSection}>
         <div className={styles.filterGroup}>
-          <label htmlFor="campeonato-select">Campeonato:</label>
+          <label>Campeonato:</label>
           <select
-            id="campeonato-select"
             value={campeonatoSelecionado}
             onChange={(e) => setCampeonatoSelecionado(e.target.value)}
             className={styles.select}
           >
-            <option value="">-- Escolher --</option>
-            {campeonatos.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            <option value="">-- Selecione um Campeonato --</option>
+            {campeonatos.map((camp) => (
+              <option key={camp} value={camp}>
+                {camp}
               </option>
             ))}
           </select>
@@ -151,17 +147,16 @@ export default function CampeonatoPage() {
 
         {campeonatoSelecionado && (
           <div className={styles.filterGroup}>
-            <label htmlFor="jogo-select">Jogo:</label>
+            <label>Jogo (opcional):</label>
             <select
-              id="jogo-select"
               value={jogoSelecionado}
               onChange={(e) => setJogoSelecionado(e.target.value)}
               className={styles.select}
             >
-              <option value="todos">TODOS</option>
-              {jogos.map((j) => (
-                <option key={j.id_jogo} value={j.id_jogo}>
-                  {j.adversario} - {new Date(j.data_jogo).toLocaleDateString('pt-BR')}
+              <option value="todos">Todos os Jogos</option>
+              {jogos.map((jogo) => (
+                <option key={jogo.id_jogo} value={jogo.id_jogo}>
+                  {jogo.adversario} ({new Date(jogo.data_jogo).toLocaleDateString('pt-BR')})
                 </option>
               ))}
             </select>
@@ -169,27 +164,61 @@ export default function CampeonatoPage() {
         )}
       </div>
 
-      {loading && <p>Carregando...</p>}
-
       {campeonatoSelecionado && (
-        <div className={styles.cardsContainer}>
-          {jogadoresComNotas.length > 0 ? (
-            jogadoresComNotas.map((jogador) => (
-              <div key={jogador.numero_camisa} className={styles.card}>
-                <img src={jogador.foto_url} alt={jogador.nome} className={styles.playerImage} />
-                <div className={styles.cardContent}>
-                  <h3>{jogador.nome}</h3>
-                  <p className={styles.position}>{jogador.posicao}</p>
-                  <p className={styles.number}>#{jogador.numero_camisa}</p>
-                  <div className={styles.ratingContainer}>
-                    <span className={styles.rating}>{jogador.media_notas.toFixed(1)}</span>
-                  </div>
-                </div>
+        <div className={styles.content}>
+          {loading ? (
+            <div className={styles.loading}>
+              <p>Carregando notas dos jogadores...</p>
+            </div>
+          ) : jogadoresComNotas.length > 0 ? (
+            <>
+              <div className={styles.statsHeader}>
+                <h2>Desempenho do Elenco</h2>
+                <p className={styles.gameInfo}>
+                  {jogoSelecionado === 'todos' ? 'Todos os jogos' : 'Jogo selecionado'}
+                </p>
               </div>
-            ))
+
+              <div className={styles.jogadoresGrid}>
+                {jogadoresComNotas.map((jogador) => (
+                  <div key={jogador.numero_camisa} className={styles.playerCard}>
+                    <div className={styles.cardCamisa}>{jogador.numero_camisa}</div>
+                    <div className={styles.cardContent}>
+                      <h3 className={styles.playerNameCard}>{jogador.nome}</h3>
+                      <p className={styles.posicaoCard}>{jogador.posicao}</p>
+                      <div className={styles.ratingContainer}>
+                        <div
+                          className={styles.ratingBall}
+                          style={{ backgroundColor: getRatingColor(jogador.media_notas) }}
+                        >
+                          {jogador.media_notas.toFixed(1)}
+                        </div>
+                        <div className={styles.ratingBar}>
+                          <div
+                            className={styles.ratingBarFill}
+                            style={{
+                              width: `${(jogador.media_notas / 10) * 100}%`,
+                              backgroundColor: getRatingColor(jogador.media_notas),
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
-            <p>Nenhum jogador encontrado para este período.</p>
+            <div className={styles.noResults}>
+              <p>Nenhum jogador avaliado neste campeonato</p>
+            </div>
           )}
+        </div>
+      )}
+
+      {!campeonatoSelecionado && (
+        <div className={styles.placeholder}>
+          <p>Selecione um campeonato para ver as avaliacoes</p>
         </div>
       )}
     </div>
